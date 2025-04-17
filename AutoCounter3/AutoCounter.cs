@@ -19,7 +19,7 @@ using Il2CppScheduleOne;
 
 namespace AutoCounter3
 {
-    public class Class1 : MelonMod
+    public class AutoCounter : MelonMod
     {
         private ConfigManager configManager;
         private float autoCounterTimer = 0f;

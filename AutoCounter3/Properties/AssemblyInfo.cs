@@ -6,7 +6,7 @@ using System.Runtime.InteropServices.ComTypes;
 using MelonLoader;
 using AutoCounter3; // The namespace of your mod class
 // ...
-[assembly: MelonInfo(typeof(Class1), "AutoAcceptCounters", "1.0.0", "RiHax")]
+[assembly: MelonInfo(typeof(AutoCounter), "AutoAcceptCounters", "1.0.0", "RiHax")]
 [assembly: MelonGame("TVGS", "Schedule I")]
 
 // General Information about an assembly is controlled through the following
