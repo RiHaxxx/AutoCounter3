@@ -16,6 +16,7 @@ using System.Collections;
 using Il2CppScheduleOne.ItemFramework;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Il2CppScheduleOne;
+using static MelonLoader.MelonLaunchOptions;
 
 namespace AutoCounter3
 {
@@ -62,7 +63,7 @@ namespace AutoCounter3
             }
         }
 
-        private void ExecuteLogic()
+        public void ExecuteLogic()
         {
             var unlockedCustomers = Customer.UnlockedCustomers;
             if (unlockedCustomers == null || unlockedCustomers.Count == 0) return;
@@ -80,7 +81,7 @@ namespace AutoCounter3
             MelonCoroutines.Start(MSGResponderCoroutine(activeConversations));
         }
 
-        private IEnumerator MSGResponderCoroutine(List<MSGConversation> msgs)
+        public IEnumerator MSGResponderCoroutine(List<MSGConversation> msgs)
         {
             if (msgs == null || msgs.Count == 0)
             {
@@ -97,7 +98,7 @@ namespace AutoCounter3
 
                 (price,quantity,product) = SetCounterOfferDetails(msg); //setCounterOfferDetails
 
-                var customer = GetCustomerFromMessage(msg);
+                var customer = GetCustomerFromConversation(msg);
                 if (customer == null)
                 {
                     MelonLogger.Warning("Customer is null or invalid. Skipping.");
@@ -107,9 +108,10 @@ namespace AutoCounter3
                 if (configManager.Config.EnableCounter)
                 {
                     int newQuantity = RoundUp(quantity);
-                    price = configManager.Config.PricePerUnit ?? customer.offeredContractInfo.Payment / quantity;
+                    float newprice = configManager.Config.PricePerUnit * newQuantity ?? price / quantity * newQuantity;
+                    (newQuantity,newprice) = getBestQuantityAndPrice(customer, product, newQuantity, newprice, configManager.Config.RoundTo);
 
-                    customer.SendCounteroffer(product, newQuantity, price * newQuantity);
+                    customer.SendCounteroffer(product, newQuantity, newprice);
                     MelonLogger.Msg("Sent counteroffer.");
 
                     yield return new WaitForSeconds(1.5f);
@@ -124,9 +126,9 @@ namespace AutoCounter3
             }
         }
 
-        private (float price, int quantity, ProductDefinition product) SetCounterOfferDetails(MSGConversation msg)
+        public (float price, int quantity, ProductDefinition product) SetCounterOfferDetails(MSGConversation msg)
         {
-            var customer = GetCustomerFromMessage(msg);
+            var customer = GetCustomerFromConversation(msg);
             if (customer?.offeredContractInfo == null)
             {
                 MelonLogger.Msg("No offer details available for the customer.");
@@ -141,22 +143,7 @@ namespace AutoCounter3
             MelonLogger.Msg($"Counteroffer Details: Price = {price}, Quantity = {quantity}, Product = {offerDetails.Products.entries[0].ProductID}");
             return (price, quantity, product);
         }
-
-        private Customer GetCustomerFromMessage(MSGConversation message)
-        {
-            if (message == null) return null;
-
-            foreach (var customer in Customer.UnlockedCustomers)
-            {
-                if (customer?.NPC?.MSGConversation == message)
-                {
-                    return customer;
-                }
-            }
-            return null;
-        }
-
-        private void ScheduleDealTime(Customer customer)
+        public void ScheduleDealTime(Customer customer)
         {
             if (customer?.NPC == null)
             {
@@ -174,7 +161,7 @@ namespace AutoCounter3
                 MelonLogger.Error($"An error occurred in ScheduleDealTime: {ex.Message}");
             }
         }
-        private void AcceptContract(Customer customer)
+        public void AcceptContract(Customer customer)
         {
             if (configManager.Config.choosetimemanual == true) return;
 
@@ -182,38 +169,127 @@ namespace AutoCounter3
             customer.SendContractAccepted(configManager.Config.DealWindow, true);
             customer.NPC.MSGConversation.SetRead(true);
         }
-        private int RoundUp(int value)
+        public int RoundUp(int value)
         {
             return (int)(Math.Ceiling(value / (double) configManager.Config.RoundTo) * configManager.Config.RoundTo);
         }
 
-        //private int GetBestPriceForQuantity(int quantity, Customer custumer)
-        //{
-        //    if (productList == null || productList.entries == null || productList.entries.Count == 0)
-        //    {
-        //        MelonLogger.Error("Product list is empty or invalid.");
-        //        return 0;
-        //    }
-        //    MelonLogger.Msg($"{ Customer.GetValueProposition(product, 50)}");
-        //    return 0;
-        //}
+        public static (int Quantity, float price) getBestQuantityAndPrice(Customer customer, ProductDefinition product, int quantity, float price, int rountTo)
+        {
+            float maxSpend = CalculateSpendingLimits(customer).maxSpend;
+            float ogPricePerUnit = customer.offeredContractInfo.Payment / (float)customer.offeredContractInfo.Products.entries[0].Quantity;
+            float newPricePerUnit = FindOptimalPrice(customer, product, quantity, price, maxSpend) / quantity;
+            int oldQuantity = quantity;
+            float oldPrice = FindOptimalPrice(customer, product, quantity, price, maxSpend);
+            int maxItterations = 30; // Set a limit to avoid infinite loops
+            MelonLogger.Msg($"Max Spend: {maxSpend}, Old Price: {oldPrice}, New Price: {newPricePerUnit}, Old Quantity: {oldQuantity}");
 
-        //public static float CalculateSuccessProbability(Customer customer, ProductDefinition product, int quantity, float price)
-        //{
-        //    float OGvalueProposition = Customer.GetValueProposition(product, customer.OfferedContractInfo.Payment / (float)customer.OfferedContractInfo.Products.GetTotalQuantity());
-        //    float valueProposition = Customer.GetValueProposition(product, price / quantity);
-        //    float valueDiff = valueProposition/OGvalueProposition;
-        //    float baseValue = customer.GetProductEnjoyment(product, customer.CustomerData.Standards.GetCorrespondingQuality());
-        //    float normalizedValue = Mathf.InverseLerp(-1f, 1f, baseValue); // Normalize to 0-1 range
+            while (true && maxItterations >= 0)
+            {
+                if (ogPricePerUnit >= newPricePerUnit) break;
 
-        //    MelonLogger.Msg($"Debug: valueProposition = {valueProposition}, baseValue = {baseValue}, normalizedValue = {normalizedValue}, test = {Customer.GetValueProposition(product, 38)}");
+                oldQuantity = quantity;
+                oldPrice = price;
 
-        //    if (OGvalueProposition <= valueProposition)
-        //        return 1f;
+                quantity += rountTo;
+                price = FindOptimalPrice(customer, product, quantity, newPricePerUnit, maxSpend);
 
-        //    float result = Mathf.Clamp01(valueDiff * normalizedValue);
-        //    MelonLogger.Msg($"Debug: result = {result}");
-        //    return result;
-        //}
+                newPricePerUnit = price / quantity;
+                maxItterations--;
+            }
+            return (oldQuantity, oldPrice);
+        }
+
+        //code from https://github.com/xyrilyn/Deal-Optimizer-Mod
+        public static float CalculateSuccessProbability(Customer customer, ProductDefinition product, int quantity, float price, bool printCalcToConsole = false) 
+        {
+            CustomerData customerData = customer.CustomerData;
+
+            float valueProposition = Customer.GetValueProposition(Registry.GetItem<ProductDefinition>(customer.OfferedContractInfo.Products.entries[0].ProductID),
+                customer.OfferedContractInfo.Payment / (float)customer.OfferedContractInfo.Products.entries[0].Quantity);
+            float productEnjoyment = customer.GetProductEnjoyment(product, customerData.Standards.GetCorrespondingQuality());
+            float enjoymentNormalized = Mathf.InverseLerp(-1f, 1f, productEnjoyment);
+            float newValueProposition = Customer.GetValueProposition(product, price / (float)quantity);
+            float quantityRatio = Mathf.Pow((float)quantity / (float)customer.OfferedContractInfo.Products.entries[0].Quantity, 0.6f);
+            float quantityMultiplier = Mathf.Lerp(0f, 2f, quantityRatio * 0.5f);
+            float penaltyMultiplier = Mathf.Lerp(1f, 0f, Mathf.Abs(quantityMultiplier - 1f));
+
+            if (newValueProposition * penaltyMultiplier > valueProposition)
+            {
+                return 1f;
+            }
+            if (newValueProposition < 0.12f)
+            {
+                return 0f;
+            }
+
+            float customerWeightedValue = productEnjoyment * valueProposition;
+            float proposedWeightedValue = enjoymentNormalized * penaltyMultiplier * newValueProposition;
+
+            if (proposedWeightedValue > customerWeightedValue)
+            {
+                return 1f;
+            }
+
+            float valueDifference = customerWeightedValue - proposedWeightedValue;
+            float threshold = Mathf.Lerp(0f, 1f, valueDifference / 0.2f);
+            float bonus = Mathf.Lerp(0f, 0.2f, Mathf.Max(customer.CurrentAddiction, customer.NPC.RelationData.NormalizedRelationDelta));
+            float thresholdMinusBonus = threshold - bonus;
+
+            return Mathf.Clamp01((0.9f - thresholdMinusBonus) / 0.9f);
+        }
+        public static int FindOptimalPrice(Customer customer, ProductDefinition product, int quantity, float currentPrice, float maxSpend, float minSuccessProbability = 0.98f)
+        {
+            int low = (int)currentPrice;
+            int high = (int)maxSpend;
+            int bestFailingPrice = (int)currentPrice;
+            int maxIterations = 30;
+            int iterations = 0;
+
+            while (iterations < maxIterations && low < high)
+            {
+                int mid = (low + high) / 2;
+                float probability = CalculateSuccessProbability(customer, product, quantity, mid);
+                bool success = probability >= minSuccessProbability;
+
+                if (success)
+                {
+                    low = mid + 1;
+                    if (low == high)
+                    {
+                        bestFailingPrice = CalculateSuccessProbability(customer, product, quantity, mid + 1) > minSuccessProbability ? mid + 1 : mid;
+                        break;
+                    }
+                }
+                else
+                {
+                    bestFailingPrice = mid;
+                    high = mid;
+                }
+                iterations++;
+            }
+
+            return bestFailingPrice;
+        }
+        public static Customer GetCustomerFromConversation(MSGConversation conversation)
+        {
+            string contactName = conversation.contactName;
+            var unlockedCustomers = Customer.UnlockedCustomers;
+            return unlockedCustomers.Find((Il2CppSystem.Predicate<Customer>)((cust) =>
+            {
+                NPC npc = cust.NPC;
+                return npc.fullName == contactName;
+            }));
+        }
+        public static (float maxSpend, float dailyAverage) CalculateSpendingLimits(Customer customer, bool printCalcToConsole = false)
+        {
+            CustomerData customerData = customer.CustomerData;
+            float adjustedWeeklySpend = customerData.GetAdjustedWeeklySpend(customer.NPC.RelationData.RelationDelta / 5f);
+            var orderDays = customerData.GetOrderDays(customer.CurrentAddiction, customer.NPC.RelationData.RelationDelta / 5f);
+            float dailyAverage = adjustedWeeklySpend / orderDays.Count;
+            float maxSpend = dailyAverage * 3f;
+
+            return (maxSpend, dailyAverage);
+        }
     }
 }
