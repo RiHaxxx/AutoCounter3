@@ -29,3 +29,7 @@ replace config after installing new version
 ## Credits
 Uses Code from:
 - [Deal-Optimizer-Mod](https://github.com/xyrilyn/Deal-Optimizer-Mod) from xyrilyn
+
+
+
+first mod, prolly the worst code. suggestions would be good
