@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/AutoCounter3/Properties/AssemblyInfo.cs
+/AutoCounter3/Properties
