@@ -87,16 +87,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="src\Class1.cs" />
-    <Compile Include="src\ConfigData.cs" />
-    <Compile Include="src\ConfigManager.cs" />
+    <Compile Include="Class1.cs" />
+    <Compile Include="ConfigData.cs" />
+    <Compile Include="ConfigManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="TextFile1.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
