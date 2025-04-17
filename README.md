@@ -14,10 +14,10 @@ The mod uses a configuration file located at `UserData/AutoCounterConfig.cfg`. Y
 - `DealWindow`: The time window for deals (e.g., Morning(0), Afternoon(1), Night(2), LateNight(3 Default)).
 - `AutoCounterInterval`: The interval (in seconds) for automatic counteroffers. Set to `-1` to disable. Press f4 for Manual. 5 Default
 - `PricePerUnit`: Fixed price per unit. Leave as `null` to calculate dynamically.
-- 'RoundTo': Set Round Value (Default 5 (Jars), 1 to disable)
-- 'EnableCounter': disable this to just accept the deals automaticly
-- 'HotKey': HotKey 285 (f4) default.  (see this for other: https://gist.github.com/Extremelyd1/4bcd495e21453ed9e1dffa27f6ba5f69)
-- 'choosetimemanual': choose the time yourself
+- `RoundTo`: Set Round Value (Default 5 (Jars), 1 to disable)
+- `EnableCounter`: disable this to just accept the deals automaticly
+- `HotKey`: HotKey 285 (f4) default.  (see this for other: https://gist.github.com/Extremelyd1/4bcd495e21453ed9e1dffa27f6ba5f69)
+- `choosetimemanual`: choose the time yourself
 
 ## How to Use
 1. Install the mod using MelonLoader.
