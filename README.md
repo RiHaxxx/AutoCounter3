@@ -25,3 +25,7 @@ The mod uses a configuration file located at `UserData/AutoCounterConfig.cfg`. Y
 3. Launch the game and enjoy automated counteroffers!
 
 replace config after installing new version 
+
+## Credits
+Uses Code from:
+- [Deal-Optimizer-Mod](https://github.com/xyrilyn/Deal-Optimizer-Mod) from xyrilyn
