@@ -70,7 +70,7 @@ namespace AutoCounter3
             foreach (var customer in unlockedCustomers)
             {
                 var msg = customer?.NPC?.MSGConversation;
-                if (msg != null && msg.AreResponsesActive && !activeConversations.Contains(msg))
+                if (msg != null && msg.AreResponsesActive && !activeConversations.Contains(msg) && customer.offeredContractInfo != null)
                 {
                     activeConversations.Add(msg);
                 }
@@ -174,6 +174,31 @@ namespace AutoCounter3
 
         public static (int Quantity, float price) getBestQuantityAndPrice(Customer customer, ProductDefinition product, int quantity, float price, int rountTo)
         {
+            if (customer == null)
+            {
+                MelonLogger.Error("Customer is null in getBestQuantityAndPrice.");
+                return (quantity, price);
+            }
+
+            if (customer.offeredContractInfo == null)
+            {
+                MelonLogger.Error("Customer's offeredContractInfo is null in getBestQuantityAndPrice. (if you have EmployeManager ignore this)");
+                //MelonLogger.Error(customer.name);
+                return (quantity, price);
+            }
+
+            if (customer.offeredContractInfo.Products?.entries == null || customer.offeredContractInfo.Products.entries.Count == 0)
+            {
+                MelonLogger.Error("Customer's offeredContractInfo.Products.entries is null or empty in getBestQuantityAndPrice.");
+                return (quantity, price);
+            }
+
+            if (product == null)
+            {
+                MelonLogger.Error("Product is null in getBestQuantityAndPrice.");
+                return (quantity, price);
+            }
+
             float maxSpend = CalculateSpendingLimits(customer).maxSpend;
             float ogPricePerUnit = customer.offeredContractInfo.Payment / (float)customer.offeredContractInfo.Products.entries[0].Quantity;
             float newPricePerUnit = FindOptimalPrice(customer, product, quantity, price, maxSpend) / quantity;
