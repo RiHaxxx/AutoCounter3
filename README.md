@@ -11,12 +11,12 @@ AutoCounter is a mod for automating counteroffers in the game. It simplifies the
 
 ## Configuration
 The mod uses a configuration file located at `UserData/AutoCounterConfig.cfg`. You can customize:
-- `DealWindow`: The time window for deals (e.g., Morning(0), Afternoon(1), Night(2), LateNight(3 Default)).
+- `DealWindow`: The time window for deals (e.g., Morning, Afternoon, Night, LateNight(Default)).
 - `AutoCounterInterval`: The interval (in seconds) for automatic counteroffers. Set to `-1` to disable. Press f4 for Manual. 5 Default
-- `PricePerUnit`: Fixed price per unit. Leave as `null` to calculate dynamically.
+- `PricePerUnit`: Fixed price per unit. Leave as `-1` to calculate dynamically.
 - `RoundTo`: Set Round Value (Default 5 (Jars), 1 to disable)
 - `EnableCounter`: disable this to just accept the deals automaticly
-- `HotKey`: HotKey 285 (f4) default.  (see this for other: https://gist.github.com/Extremelyd1/4bcd495e21453ed9e1dffa27f6ba5f69)
+- `HotKey`: HotKey F4 default.  (see [this](https://gist.github.com/Extremelyd1/4bcd495e21453ed9e1dffa27f6ba5f69) for other)
 - `choosetimemanual`: choose the time yourself
 
 ## How to Use
@@ -29,6 +29,7 @@ replace config after installing new version
 ## Credits
 Uses Code from:
 - [Deal-Optimizer-Mod](https://github.com/xyrilyn/Deal-Optimizer-Mod) from xyrilyn
+- Config-file code: [NanobotZ](https://github.com/NanobotZ)
 
 
 
