@@ -213,7 +213,7 @@ namespace AutoCounter3
                 newPricePerUnit = price / quantity;
                 maxItterations--;
             }
-            if (oldPrice > maxSpend) oldPrice = maxSpend;
+            if (oldPrice > maxSpend) oldPrice = maxSpend - 1;
             return (oldQuantity, oldPrice);
         }
 
