@@ -1,16 +1,16 @@
 ﻿using System.IO;
-using Il2CppScheduleOne.Economy;
-using System.Xml;
 using Newtonsoft.Json;
-using Formatting = Newtonsoft.Json.Formatting;
 
 namespace AutoCounter3
 {
     public class ConfigManager
     {
-        private const string ConfigFilePath = "UserData/AutoCounterConfig.cfg";
+        private const string OldConfigFilePath = "UserData/AutoCounterConfig.cfg";
+        // Using new config name because for some reason Mod Manager wants the the Config Category to start with or equal the mod name
+        private const string ConfigName = "AutoAcceptCounters";
+        private const string ConfigFilePath = "UserData/" + ConfigName + ".cfg";
 
-        public ConfigData Config { get; private set; }
+        public BaseConfigData Config { get; private set; }
 
         public ConfigManager()
         {
@@ -19,22 +19,29 @@ namespace AutoCounter3
 
         public void LoadConfig()
         {
-            if (File.Exists(ConfigFilePath))
+            if (File.Exists(OldConfigFilePath)) // Convert old json config to the new one
             {
-                var json = File.ReadAllText(ConfigFilePath);
-                Config = JsonConvert.DeserializeObject<ConfigData>(json) ?? new ConfigData();
+                try
+                {
+                    var json = File.ReadAllText(OldConfigFilePath);
+                    Config = JsonConvert.DeserializeObject<JsonConfigData>(json);
+                    if (Config != null)
+                        File.Delete(OldConfigFilePath);
+                }
+                catch
+                {
+                    // Config is already in TOML format
+                }
             }
-            else
-            {
-                Config = new ConfigData();
-                SaveConfig();
-            }
+
+            Config = new MelonConfigData(ConfigName, ConfigFilePath, Config as JsonConfigData);
+
+            SaveConfig();
         }
 
         public void SaveConfig()
         {
-            var json = JsonConvert.SerializeObject(Config, Formatting.Indented);
-            File.WriteAllText(ConfigFilePath, json);
+            Config.Save();
         }
     }
 }

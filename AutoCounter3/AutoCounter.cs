@@ -24,12 +24,10 @@ namespace AutoCounter3
     {
         private ConfigManager configManager;
         private float autoCounterTimer = 0f;
-        public override void OnEarlyInitializeMelon()
+        public override void OnInitializeMelon()
         {
             try
             {
-                base.OnEarlyInitializeMelon();
-
                 configManager = new ConfigManager();
                 if (configManager.Config == null)
                 {
@@ -201,7 +199,7 @@ namespace AutoCounter3
         }
 
         //code from https://github.com/xyrilyn/Deal-Optimizer-Mod
-        public static float CalculateSuccessProbability(Customer customer, ProductDefinition product, int quantity, float price, bool printCalcToConsole = false) 
+        public static float CalculateSuccessProbability(Customer customer, ProductDefinition product, int quantity, float price, bool printCalcToConsole = false)
         {
             CustomerData customerData = customer.CustomerData;
 
