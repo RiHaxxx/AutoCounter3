@@ -180,13 +180,6 @@ namespace AutoCounter3
                 return (quantity, price);
             }
 
-            if (customer.offeredContractInfo == null)
-            {
-                MelonLogger.Error("Customer's offeredContractInfo is null in getBestQuantityAndPrice. (if you have EmployeManager ignore this)");
-                //MelonLogger.Error(customer.name);
-                return (quantity, price);
-            }
-
             if (customer.offeredContractInfo.Products?.entries == null || customer.offeredContractInfo.Products.entries.Count == 0)
             {
                 MelonLogger.Error("Customer's offeredContractInfo.Products.entries is null or empty in getBestQuantityAndPrice.");
@@ -220,6 +213,7 @@ namespace AutoCounter3
                 newPricePerUnit = price / quantity;
                 maxItterations--;
             }
+            if (oldPrice > maxSpend) oldPrice = maxSpend;
             return (oldQuantity, oldPrice);
         }
 
