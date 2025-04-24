@@ -172,49 +172,77 @@ namespace AutoCounter3
             return (int)(Math.Ceiling(value / (double) configManager.Config.RoundTo) * configManager.Config.RoundTo);
         }
 
-        public static (int Quantity, float price) getBestQuantityAndPrice(Customer customer, ProductDefinition product, int quantity, float price, int rountTo)
+        public (int Quantity, float Price) getBestQuantityAndPrice(Customer customer, ProductDefinition product, int quantity, float price, int roundTo)
         {
             if (customer == null)
             {
-                MelonLogger.Error("Customer is null in getBestQuantityAndPrice.");
+                MelonLogger.Error("Customer is null in GetBestQuantityAndPrice.");
                 return (quantity, price);
             }
 
             if (customer.offeredContractInfo.Products?.entries == null || customer.offeredContractInfo.Products.entries.Count == 0)
             {
-                MelonLogger.Error("Customer's offeredContractInfo.Products.entries is null or empty in getBestQuantityAndPrice.");
+                MelonLogger.Error("Customer's offeredContractInfo.Products.entries is null or empty in GetBestQuantityAndPrice.");
                 return (quantity, price);
             }
 
             if (product == null)
             {
-                MelonLogger.Error("Product is null in getBestQuantityAndPrice.");
+                MelonLogger.Error("Product is null in GetBestQuantityAndPrice.");
                 return (quantity, price);
             }
 
             float maxSpend = CalculateSpendingLimits(customer).maxSpend;
-            float ogPricePerUnit = customer.offeredContractInfo.Payment / (float)customer.offeredContractInfo.Products.entries[0].Quantity;
+            float originalPricePerUnit = customer.offeredContractInfo.Payment / customer.offeredContractInfo.Products.entries[0].Quantity;
             float newPricePerUnit = FindOptimalPrice(customer, product, quantity, price, maxSpend) / quantity;
-            int oldQuantity = quantity;
-            float oldPrice = FindOptimalPrice(customer, product, quantity, price, maxSpend);
-            int maxItterations = 30; // Set a limit to avoid infinite loops
-            MelonLogger.Msg($"Max Spend: {maxSpend}, Old Price: {oldPrice}, New Price: {newPricePerUnit}, Old Quantity: {oldQuantity}");
 
-            while (true && maxItterations >= 0)
+            int adjustedQuantity = quantity;
+            float adjustedPrice = FindOptimalPrice(customer, product, quantity, price, maxSpend);
+
+            if (configManager.Config.PricePerUnit.HasValue)
             {
-                if (ogPricePerUnit >= newPricePerUnit) break;
+                float pricePerUnit = configManager.Config.PricePerUnit.Value;
+                while (pricePerUnit * quantity < maxSpend)
+                {
+                    adjustedQuantity = quantity;
+                    quantity += roundTo;
+                }
+                MelonLogger.Msg($"Name: {customer.name}, Max Spend: {maxSpend}, Adjusted Price: {adjustedPrice}, New Price Per Unit: {newPricePerUnit}, Adjusted Quantity: {adjustedQuantity}");
+                return (adjustedQuantity, pricePerUnit * quantity);
+            }
 
-                oldQuantity = quantity;
-                oldPrice = price;
+            int maxIterations = 30;
+            while (maxIterations-- > 0)
+            {
+                if (!configManager.Config.GoToMaxSpend && originalPricePerUnit >= newPricePerUnit) break;
 
-                quantity += rountTo;
-                price = FindOptimalPrice(customer, product, quantity, newPricePerUnit, maxSpend);
+                adjustedQuantity = quantity;
+                quantity += roundTo;
+
+                adjustedPrice = price;
+                price = FindOptimalPrice(customer, product, quantity, price, maxSpend, configManager.Config.MinSuccessProbability);
 
                 newPricePerUnit = price / quantity;
-                maxItterations--;
+
+                if ((adjustedPrice == price || price >= maxSpend - 2) && adjustedQuantity < quantity && configManager.Config.GoToMaxSpend)
+                {
+                    adjustedPrice = maxSpend - 1;
+                    adjustedQuantity = quantity;
+                    break;
+                }
             }
-            if (oldPrice > maxSpend) oldPrice = maxSpend - 1;
-            return (oldQuantity, oldPrice);
+
+            if (adjustedPrice >= maxSpend) adjustedPrice = maxSpend - 1;
+
+            if (adjustedPrice <= customer.offeredContractInfo.Payment)
+            {
+                MelonLogger.Msg($"Customer's original price is better; Adjusted Price: {adjustedPrice}, Customer Price: {customer.offeredContractInfo.Payment}, try to use PricePerUnit");
+                adjustedPrice = customer.offeredContractInfo.Payment;
+                adjustedQuantity = customer.offeredContractInfo.Products.GetTotalQuantity();
+            }
+
+            MelonLogger.Msg($"Name: {customer.name}, Max Spend: {maxSpend}, Adjusted Price: {adjustedPrice}, New Price Per Unit: {newPricePerUnit}, Adjusted Quantity: {adjustedQuantity}");
+            return (adjustedQuantity, adjustedPrice);
         }
 
         //code from https://github.com/xyrilyn/Deal-Optimizer-Mod
@@ -263,18 +291,23 @@ namespace AutoCounter3
             int maxIterations = 30;
             int iterations = 0;
 
+            //MelonLogger.Msg($"Finding optimal price for {product} with quantity {quantity} and current price {currentPrice}");
+
             while (iterations < maxIterations && low < high)
             {
                 int mid = (low + high) / 2;
                 float probability = CalculateSuccessProbability(customer, product, quantity, mid);
                 bool success = probability >= minSuccessProbability;
+                //MelonLogger.Msg($"[DEBUG] Iteration {iterations}: Low = {low}, High = {high}, Mid = {mid}, Probability = {probability}");
 
                 if (success)
                 {
+                    //bestFailingPrice = mid;
                     low = mid + 1;
                     if (low == high)
                     {
                         bestFailingPrice = CalculateSuccessProbability(customer, product, quantity, mid + 1) > minSuccessProbability ? mid + 1 : mid;
+                        
                         break;
                     }
                 }
@@ -285,6 +318,8 @@ namespace AutoCounter3
                 }
                 iterations++;
             }
+
+            MelonLogger.Msg($"Optimal price found: {bestFailingPrice}");
 
             return bestFailingPrice;
         }

@@ -13,6 +13,8 @@ namespace AutoCounter3
         public virtual bool EnableCounter { get; set; } = true; // Optional, default is true
         public virtual KeyCode Hotkey { get; set; } = KeyCode.F4; // Optional, default is F4
         public virtual bool choosetimemanual { get; set; } = false; // Optional, default is false
+        public virtual bool GoToMaxSpend { get; set; } = false; // Optional, default is false
+        public virtual float MinSuccessProbability { get; set; } = 0.98f; // Optional, default is 0.98f
 
         public virtual void Save() { }
     }
@@ -32,6 +34,8 @@ namespace AutoCounter3
         private MelonPreferences_Entry<bool> configEnableCounter;
         private MelonPreferences_Entry<KeyCode> configHotkey;
         private MelonPreferences_Entry<bool> configChooseTimeManual;
+        private MelonPreferences_Entry<bool> configGoToMaxSpend;
+        private MelonPreferences_Entry<float> configMinSuccessProbability;
 
         public override EDealWindow DealWindow { get => configDealWindow.Value; set => configDealWindow.Value = value; }
         public override int AutoCounterInterval { get => configAutoCounterInterval.Value; set => configAutoCounterInterval.Value = value; }
@@ -40,6 +44,8 @@ namespace AutoCounter3
         public override bool EnableCounter { get => configEnableCounter.Value; set => configEnableCounter.Value = value; }
         public override KeyCode Hotkey { get => configHotkey.Value; set => configHotkey.Value = value; }
         public override bool choosetimemanual { get => configChooseTimeManual.Value; set => configChooseTimeManual.Value = value; }
+        public override bool GoToMaxSpend { get => configGoToMaxSpend.Value; set => configGoToMaxSpend.Value = value; }
+        public override float MinSuccessProbability { get => configMinSuccessProbability.Value; set => configMinSuccessProbability.Value = value; }
 
         public MelonConfigData(string name, string filePath = null, JsonConfigData jsonConfigData = null)
         {
@@ -82,6 +88,16 @@ namespace AutoCounter3
                 default_value: false,
                 display_name: "Choose Time Manual");
 
+            configGoToMaxSpend = config.CreateEntry(
+                identifier: "GoToMaxSpend",
+                default_value: false,
+                display_name: "Go To Max Spend");
+
+            configMinSuccessProbability = config.CreateEntry(
+                identifier: "MinSuccessProbability",
+                default_value: 0.98f,
+                display_name: "Min Success Probability");
+
             if (jsonConfigData != null)
             {
                 DealWindow = jsonConfigData.DealWindow;
@@ -91,6 +107,8 @@ namespace AutoCounter3
                 EnableCounter = jsonConfigData.EnableCounter;
                 Hotkey = jsonConfigData.Hotkey;
                 choosetimemanual = jsonConfigData.choosetimemanual;
+                GoToMaxSpend = jsonConfigData.GoToMaxSpend;
+                MinSuccessProbability = jsonConfigData.MinSuccessProbability;
             }
         }
 
