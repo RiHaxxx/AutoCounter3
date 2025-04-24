@@ -18,6 +18,8 @@ The mod uses a configuration file located at `UserData/AutoCounterConfig.cfg`. Y
 - `EnableCounter`: disable this to just accept the deals automaticly
 - `HotKey`: HotKey F4 default.  (see [this](https://gist.github.com/Extremelyd1/4bcd495e21453ed9e1dffa27f6ba5f69) for other)
 - `choosetimemanual`: choose the time yourself
+- `GoToMaxSpend` : (experimental may work may not)
+- `MinSuccessProbability`: probability ig
 
 ## How to Use
 1. Install the mod using MelonLoader.
